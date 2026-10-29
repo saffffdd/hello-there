@@ -538,8 +538,8 @@ function init() {
   });
   const querySession=new URLSearchParams(location.search).get("session");
   if(querySession&&getSession(querySession))db.activeSessionId=querySession;
-  if(!db.activeSessionId&&db.sessions.length) {
-    const active=db.sessions.find(s=>s.status==="active"||s.status==="paused");
+  if((!getSession()||getSession().status==="finished")&&db.sessions.length) {
+    const active=db.sessions.slice().reverse().find(s=>s.status==="active"||s.status==="paused");
     if(active)db.activeSessionId=active.id;
   }
   saveDb();installPwa();render();
