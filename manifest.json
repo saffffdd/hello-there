@@ -1,0 +1,19 @@
+{
+  "name": "Rei da Quadra — Beach Tennis",
+  "short_name": "Rei da Quadra",
+  "description": "Organize jogos de Beach Tennis com rotação automática.",
+  "lang": "pt-BR",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#111311",
+  "theme_color": "#111311",
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
