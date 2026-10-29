@@ -1,0 +1,20 @@
+name: Validar Rei da Quadra
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Verificar sintaxe JavaScript
+        run: node --check app.js
+      - name: Testar regras de rotação
+        run: node tests/rotation.test.js
