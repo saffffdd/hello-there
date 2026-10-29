@@ -15,6 +15,6 @@ jobs:
         with:
           node-version: 20
       - name: Verificar sintaxe JavaScript
-        run: node --check app.js
+        run: node --check rotation.js && node --check app.js
       - name: Testar regras de rotação
         run: node tests/rotation.test.js
