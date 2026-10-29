@@ -363,7 +363,7 @@ function confirmResult(loserSide) {
   const loser=loserSide==="A"?session.teamA.slice():session.teamB.slice();
   const winner=loserSide==="A"?session.teamB.slice():session.teamA.slice();
   const pool=session.reserve.concat(loser);
-  const entrants=chooseEntrants(pool,winner,session);
+  const entrants=session.nextEntrants && session.nextEntrants.length===2 && session.nextEntrants.every(id=>session.reserve.includes(id)) ? session.nextEntrants.slice() : chooseEntrants(pool,winner,session);
   const winnerText=winner.map(id=>playerName(id,session)).join(" + ");
   const loserText=loser.map(id=>playerName(id,session)).join(" + ");
   const nextText=entrants.length?entrants.map(id=>playerName(id,session)).join(" + "):"Não há dois desafiantes disponíveis";
@@ -391,7 +391,7 @@ function recordResult(loserSide, entrants) {
   session.history.push(record);
   session.teamA=winnerSide==="A"?winnerIds.slice():selected.slice();
   session.teamB=winnerSide==="B"?winnerIds.slice():selected.slice();
-  session.reserve=pool.filter(id=>!selected.includes(id));
+  session.reserve=pool.filter(id=>!selected.includes(id));session.nextEntrants=null;
   session.matchNo+=1;session.updatedAt=playedAt;
   try{validateSession(session);}catch(error){restoreSnapshot(session,snapshot);session.undoStack.pop();session.history.pop();toast("Rotação cancelada: "+error.message,"error");return;}
   saveDb();render();toast("Resultado registrado. A próxima partida está pronta!");
