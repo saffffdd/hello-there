@@ -14,11 +14,20 @@ Aplicação web mobile-first para organizar partidas 2x2 no formato Rei da Quadr
 - Persistência automática no navegador via localStorage.
 - Exportação CSV e backup JSON com importação.
 - Manifesto, ícone e service worker para instalação como PWA em hospedagem HTTPS.
-- Esquema SQL inicial com RLS em supabase-schema.sql.
+
+## Lovable Cloud (banco na nuvem)
+
+O app original é HTML/CSS/JavaScript estático e, no momento, usa `localStorage`. **A publicação sozinha não transforma esse armazenamento em banco compartilhado.** O Lovable Cloud precisa ser ativado no próprio projeto Lovable e o código precisa ser integrado ao backend gerenciado.
+
+Há um guia com um prompt de implementação completo, incluindo autenticação, tabelas, RLS, persistência entre dispositivos, compartilhamento seguro e testes:
+
+- [Abrir LOVABLE_CLOUD_SETUP.md](./LOVABLE_CLOUD_SETUP.md)
+
+Abra o projeto no Lovable, ative o Cloud/backend pela interface quando solicitado e cole o prompt desse arquivo no chat do projeto. O Lovable precisa executar as migrações no backend do projeto; não basta adicionar SQL ao GitHub. Não coloque chaves secretas no frontend.
 
 ## Executar localmente
 
-O modo local não precisa de build nem de dependências. Abra index.html. Para testar o PWA/service worker, rode um servidor local:
+O modo local não precisa de build nem de dependências. Abra `index.html`. Para testar o PWA/service worker, rode um servidor local:
 
 ```bash
 python -m http.server 8080
@@ -26,15 +35,12 @@ python -m http.server 8080
 
 Acesse http://localhost:8080.
 
-## Persistência
+## Persistência atual e limitações
 
-O modo local salva os dados apenas no navegador/dispositivo atual. Não existe sincronização automática entre dispositivos. Exporte um backup JSON em Configurações para guardar uma cópia.
-
-## Configurar Supabase
-
-O arquivo supabase-schema.sql fornece tabelas e políticas RLS iniciais. Para uso multiusuário, ainda é necessário configurar um projeto Supabase, autenticação, variáveis SUPABASE_URL e SUPABASE_ANON_KEY, gravações transacionais no servidor e uma Edge Function para compartilhamento público protegido. Nunca exponha a chave service_role no frontend. O SQL sozinho não ativa sincronização em tempo real nem compartilhamento entre dispositivos.
-
-O botão de compartilhar no modo local cria um link com o identificador da sessão, mas não publica os dados locais. O compartilhamento e a sincronização remota só estarão funcionais depois da configuração do backend.
+- Antes da integração do Lovable Cloud, os dados ficam apenas no navegador/dispositivo atual.
+- O botão de compartilhar no modo local não publica os dados da sessão para outros dispositivos.
+- Exporte um backup JSON em Configurações antes de mudar de dispositivo ou ambiente.
+- O arquivo `supabase-schema.sql` é apenas um esquema inicial para quem escolher um projeto Supabase próprio; ele não configura o Lovable Cloud e não ativa sincronização.
 
 ## Testes de regras
 
@@ -46,4 +52,4 @@ node tests/rotation.test.js
 
 ## Publicação
 
-Publique os arquivos estáticos em uma hospedagem HTTPS, como GitHub Pages, Netlify ou Vercel. Este commit não publica o site automaticamente.
+Publique pelo Lovable após sincronizar as alterações e concluir a configuração do backend. A integração com o banco deve ser validada no ambiente publicado, em dois navegadores/dispositivos, antes de usar como fonte oficial dos jogos.
