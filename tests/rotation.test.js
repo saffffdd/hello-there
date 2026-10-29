@@ -1,37 +1,40 @@
-// Testes sem dependências: node tests/rotation.test.js
-const assert = require("node:assert/strict");
-
-function unique(ids) { return new Set(ids).size === ids.length; }
-function rotate(state, loserSide, entrants) {
-  const winner = loserSide === "A" ? state.teamB : state.teamA;
-  const loser = loserSide === "A" ? state.teamA : state.teamB;
-  const pool = state.reserve.concat(loser);
-  const selected = entrants || pool.slice(0, 2);
-  assert.equal(selected.length, 2, "dois desafiantes");
-  assert.equal(new Set(selected).size, 2, "desafiantes distintos");
-  assert.ok(selected.every(id => pool.includes(id)), "desafiantes precisam estar na reserva");
-  const reserve = pool.filter(id => !selected.includes(id));
-  const court = winner.concat(selected);
-  assert.equal(court.length, 4);
-  assert.ok(unique(court), "ninguém pode aparecer duas vezes em quadra");
-  assert.ok(unique(reserve), "reserva sem duplicados");
-  assert.equal(court.length + reserve.length, state.teamA.length + state.teamB.length + state.reserve.length);
-  return {teamA:winner, teamB:selected, reserve};
+// Testes da mesma função pura usada pelo aplicativo: node tests/rotation.test.js
+const assert=require("node:assert/strict");
+const {buildNextRotation}=require("../rotation.js");
+function unique(ids){return new Set(ids).size===ids.length;}
+function checkPartition(before,after){
+  const beforeIds=before.teamA.concat(before.teamB,before.reserve);
+  const afterIds=after.teamA.concat(after.teamB,after.reserve);
+  assert.equal(after.teamA.length+after.teamB.length,4,"quadra com quatro jogadores");
+  assert.ok(unique(after.teamA.concat(after.teamB)),"quadra sem duplicações");
+  assert.ok(unique(after.reserve),"reserva sem duplicações");
+  assert.ok(after.teamA.concat(after.teamB).every(id=>!after.reserve.includes(id)),"ninguém simultaneamente na quadra e na reserva");
+  assert.equal(afterIds.length,beforeIds.length,"total de participantes preservado");
+  assert.ok(unique(beforeIds),"estado inicial sem duplicações");
+  assert.ok(beforeIds.every(id=>afterIds.includes(id))&&afterIds.every(id=>beforeIds.includes(id)),"nenhum participante perdido ou duplicado");
 }
-
-const initial = {teamA:["a","b"],teamB:["c","d"],reserve:["e","f","g","h"]};
-const next = rotate(initial,"B",["e","f"]);
-assert.deepEqual(next.teamA,["a","b"],"vencedores permanecem");
-assert.deepEqual(next.teamB,["e","f"],"desafiantes entram");
-assert.deepEqual(next.reserve,["g","h","c","d"],"perdedores vão para o fim da fila");
-assert.equal(next.teamA.length + next.teamB.length + next.reserve.length,8);
-
-const four = {teamA:["a","b"],teamB:["c","d"],reserve:[]};
-const fourNext = rotate(four,"A",["a","b"]);
-assert.deepEqual(fourNext.teamA,["c","d"]);
-assert.deepEqual(fourNext.teamB,["a","b"]);
-assert.deepEqual(fourNext.reserve,[]);
-
-assert.throws(() => rotate(initial,"A",["c","e"]), /precisam estar na reserva/);
-assert.throws(() => rotate(initial,"A",["e","e"]), /desafiantes distintos/);
-console.log("OK: rotação, fila, quatro jogadores e validações básicas.");
+const example={teamA:["João","Pedro"],teamB:["Rodrigo","Camila"],reserve:["Ana","Lucas","Bruno","Julia"]};
+// Regressão obrigatória: a dupla B perde e Camila não pode voltar à quadra.
+const next=buildNextRotation(example,"B",["Ana","Lucas"]);
+assert.deepEqual(next.teamA,["João","Pedro"],"a dupla vencedora permanece");
+assert.deepEqual(next.teamB,["Ana","Lucas"],"entram dois jogadores elegíveis da reserva");
+assert.deepEqual(next.reserve,["Bruno","Julia","Rodrigo","Camila"],"perdedores vão para o fim da fila");
+assert.ok(!next.teamA.concat(next.teamB).includes("Camila"),"Camila não pode continuar na quadra");
+assert.ok(!next.teamA.concat(next.teamB).includes("Rodrigo"),"Rodrigo não pode continuar na quadra");
+checkPartition(example,next);
+// Cobertura da outra dupla perdedora.
+const reverse=buildNextRotation(example,"A",["Bruno","Julia"]);
+assert.deepEqual(reverse.teamA,["Bruno","Julia"]);
+assert.deepEqual(reverse.teamB,["Rodrigo","Camila"]);
+assert.deepEqual(reverse.reserve,["Ana","Lucas","João","Pedro"]);
+checkPartition(example,reverse);
+// Nunca permitir seleção da dupla perdedora, duplicatas ou escolha incompleta.
+assert.throws(()=>buildNextRotation(example,"B",["Camila","Ana"]),/exclusivamente da reserva/);
+assert.throws(()=>buildNextRotation(example,"B",["Rodrigo","Camila"]),/exclusivamente da reserva/);
+assert.throws(()=>buildNextRotation(example,"B",["Ana","Ana"]),/dois jogadores distintos/);
+assert.throws(()=>buildNextRotation(example,"B",["Ana"]),/dois jogadores distintos/);
+// Sem dois jogadores na reserva, não se registra uma rotação inválida.
+assert.throws(()=>buildNextRotation({teamA:["A","B"],teamB:["C","D"],reserve:[]},"B",["C","D"]),/dois jogadores na reserva/);
+assert.throws(()=>buildNextRotation({teamA:["A","B"],teamB:["C","D"],reserve:["E"]},"A",["E","B"]),/dois jogadores na reserva/);
+assert.throws(()=>buildNextRotation(example,"B",["João","Ana"]),/exclusivamente da reserva/);
+console.log("OK: vencedor permanece, dupla perdedora sai, reserva exclusiva, fila preservada e sem duplicações.");
