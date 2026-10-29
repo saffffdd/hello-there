@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#111311">
+  <meta name="description" content="Organize seu Beach Tennis com sorteios justos, rotação automática e histórico de partidas.">
+  <title>Rei da Quadra — Beach Tennis</title>
+  <link rel="manifest" href="./manifest.json">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='24' fill='%23c8f169'/%3E%3Ctext x='50' y='68' font-size='54' text-anchor='middle' font-family='Arial' font-weight='bold' fill='%23111311'%3ER%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="./styles.css">
+  <script defer src="./app.js"></script>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <a class="brand" href="#" data-view="home" aria-label="Rei da Quadra, início">
+        <span class="brand-mark">R<span>Q</span></span>
+        <span class="brand-copy"><strong>REI DA QUADRA</strong><small>BEACH TENNIS</small></span>
+      </a>
+      <div class="sidebar-label">MENU</div>
+      <nav class="side-nav" aria-label="Navegação principal">
+        <button data-view="home" class="nav-item active"><span>⌂</span> Início</button>
+        <button data-view="court" class="nav-item"><span>▦</span> Quadra</button>
+        <button data-view="reserve" class="nav-item"><span>⇄</span> Reserva <b id="reserve-count-nav">0</b></button>
+        <button data-view="history" class="nav-item"><span>◷</span> Histórico</button>
+        <button data-view="players" class="nav-item"><span>♙</span> Jogadores</button>
+        <button data-view="settings" class="nav-item"><span>⚙</span> Configurações</button>
+      </nav>
+      <div class="sidebar-bottom">
+        <span class="live-dot"></span><span>Seus dados salvos neste dispositivo</span>
+        <small id="sync-label">Modo local</small>
+      </div>
+    </aside>
+    <main class="main-area">
+      <header class="topbar">
+        <button class="mobile-brand" data-view="home"><span class="brand-mark">R<span>Q</span></span><strong>REI DA QUADRA</strong></button>
+        <div class="topbar-context"><span class="eyebrow">BEACH TENNIS / GESTÃO DE JOGO</span><span id="topbar-session">Bora jogar?</span></div>
+        <div class="topbar-actions">
+          <span class="status-pill"><span class="live-dot"></span><span id="top-status">Pronto para jogar</span></span>
+          <button class="icon-button" id="install-button" title="Instalar aplicativo" aria-label="Instalar aplicativo" hidden>↓</button>
+        </div>
+      </header>
+      <section id="view-root" class="view-root" aria-live="polite"></section>
+      <footer class="app-footer"><span>REI DA QUADRA <span class="footer-dot">•</span> FEITO PARA QUEM VIVE O JOGO</span><span id="storage-note">Modo local · salvo neste navegador</span></footer>
+    </main>
+  </div>
+  <nav class="bottom-nav" aria-label="Navegação móvel">
+    <button data-view="court"><span>▦</span><small>Quadra</small></button>
+    <button data-view="reserve"><span>⇄</span><small>Reserva</small></button>
+    <button data-view="history"><span>◷</span><small>Histórico</small></button>
+    <button data-view="players"><span>♙</span><small>Jogadores</small></button>
+    <button data-view="settings"><span>⚙</span><small>Ajustes</small></button>
+  </nav>
+  <div id="toast-region" class="toast-region" aria-live="polite" aria-atomic="true"></div>
+  <dialog id="app-dialog" class="app-dialog"><div id="dialog-content"></div></dialog>
+</body>
+</html>
