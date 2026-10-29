@@ -1,6 +1,7 @@
 // Testes da mesma função pura usada pelo aplicativo: node tests/rotation.test.js
-const assert=require("node:assert/strict");
-const {buildNextRotation}=require("../rotation.js");
+import assert from "node:assert/strict";
+import "../rotation.js";
+const {buildNextRotation}=globalThis.ReiDaQuadraRotation;
 function unique(ids){return new Set(ids).size===ids.length;}
 function checkPartition(before,after){
   const beforeIds=before.teamA.concat(before.teamB,before.reserve);
