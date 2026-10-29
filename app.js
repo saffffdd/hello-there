@@ -368,10 +368,11 @@ function confirmResult(loserSide) {
   const loserText=loser.map(id=>playerName(id,session)).join(" + ");
   const nextText=entrants.length?entrants.map(id=>playerName(id,session)).join(" + "):"Não há dois desafiantes disponíveis";
   const body='<div class="history-teams"><div class="history-team winner"><small>CONTINUAM</small><strong>'+escapeHtml(winnerText)+'</strong></div><div class="history-vs">VS</div><div class="history-team"><small>SAEM</small><strong>'+escapeHtml(loserText)+'</strong></div></div><div class="divider"></div><div class="field"><label>Próxima dupla desafiante</label><div style="font-size:13px;line-height:1.7">'+escapeHtml(nextText)+'</div></div><p class="muted" style="margin-top:12px">O resultado só será salvo depois de confirmar. A ação pode ser desfeita.</p>';
-  showDialog("Confirmar resultado?","Partida #"+session.matchNo+" · confira quem venceu e quem perdeu.",[{label:"Cancelar"},{label:"Confirmar rotação",className:"btn-primary",action:()=>recordResult(loserSide,entrants)}],body);
+  showDialog("Confirmar resultado?","Partida #"+session.matchNo+" · confira quem venceu e quem perdeu.",[{label:"Cancelar"},{label:"Confirmar rotação",className:"btn-primary",action:()=>recordResult(loserSide,entrants,session.id,session.matchNo)}],body);
 }
-function recordResult(loserSide, entrants) {
+function recordResult(loserSide, entrants, sessionId, expectedMatchNo) {
   const session=getActiveSession();if(!session||session.status!=="active")return;
+  if(session.id!==sessionId||session.matchNo!==expectedMatchNo){toast("Esta partida já foi registrada ou mudou. Atualize a quadra.","error");return;}
   const snapshot=snapshotSession(session);
   const teamA=session.teamA.slice(),teamB=session.teamB.slice();
   const winnerSide=loserSide==="A"?"B":"A";
