@@ -73,10 +73,10 @@ function validateSession(session) {
   return true;
 }
 function snapshotSession(session) {
-  return {status:session.status,teamA:session.teamA.slice(),teamB:session.teamB.slice(),reserve:session.reserve.slice(),matchNo:session.matchNo,history:clone(session.history),updatedAt:session.updatedAt};
+  return {status:session.status,teamA:session.teamA.slice(),teamB:session.teamB.slice(),reserve:session.reserve.slice(),matchNo:session.matchNo,history:clone(session.history),nextEntrants:session.nextEntrants?session.nextEntrants.slice():null,updatedAt:session.updatedAt};
 }
 function restoreSnapshot(session, snapshot) {
-  session.status=snapshot.status; session.teamA=snapshot.teamA.slice(); session.teamB=snapshot.teamB.slice(); session.reserve=snapshot.reserve.slice(); session.matchNo=snapshot.matchNo; session.history=clone(snapshot.history); session.updatedAt=new Date().toISOString();
+  session.status=snapshot.status; session.teamA=snapshot.teamA.slice(); session.teamB=snapshot.teamB.slice(); session.reserve=snapshot.reserve.slice(); session.matchNo=snapshot.matchNo; session.history=clone(snapshot.history); session.nextEntrants=snapshot.nextEntrants?snapshot.nextEntrants.slice():null; session.updatedAt=new Date().toISOString();
 }
 function toast(message,type="success") {
   const region=$("#toast-region");
@@ -362,8 +362,8 @@ function confirmResult(loserSide) {
   const session=getActiveSession();if(!session||session.status!=="active")return;
   const loser=loserSide==="A"?session.teamA.slice():session.teamB.slice();
   const winner=loserSide==="A"?session.teamB.slice():session.teamA.slice();
-  const pool=session.reserve.concat(loser);
-  const entrants=session.nextEntrants && session.nextEntrants.length===2 && session.nextEntrants.every(id=>session.reserve.includes(id)) ? session.nextEntrants.slice() : chooseEntrants(pool,winner,session);
+  const pool=session.reserve.slice();
+  const entrants=session.nextEntrants && session.nextEntrants.length===2 && new Set(session.nextEntrants).size===2 && session.nextEntrants.every(id=>pool.includes(id)) ? session.nextEntrants.slice() : chooseEntrants(pool,winner,session);
   const winnerText=winner.map(id=>playerName(id,session)).join(" + ");
   const loserText=loser.map(id=>playerName(id,session)).join(" + ");
   const nextText=entrants.length?entrants.map(id=>playerName(id,session)).join(" + "):"Não há dois desafiantes disponíveis";
@@ -373,28 +373,46 @@ function confirmResult(loserSide) {
 function recordResult(loserSide, entrants, sessionId, expectedMatchNo) {
   const session=getActiveSession();if(!session||session.status!=="active")return;
   if(session.id!==sessionId||session.matchNo!==expectedMatchNo){toast("Esta partida já foi registrada ou mudou. Atualize a quadra.","error");return;}
+  if(!window.ReiDaQuadraRotation){toast("Não foi possível carregar as regras de rotação. Atualize a página.","error");return;}
+
+  // Prepare and validate the complete next state before mutating the live session.
   const snapshot=snapshotSession(session);
   const teamA=session.teamA.slice(),teamB=session.teamB.slice();
   const winnerSide=loserSide==="A"?"B":"A";
   const winnerIds=(winnerSide==="A"?teamA:teamB).slice();
   const loserIds=(loserSide==="A"?teamA:teamB).slice();
-  const pool=session.reserve.concat(loserIds);
-  let selected=entrants.filter(id=>pool.includes(id));
-  if(selected.length!==2||new Set(selected).size!==2) selected=chooseEntrants(pool,winnerIds,session);
-  if(selected.length!==2) {
-    toast("Não há dois jogadores disponíveis para formar a próxima dupla.","error");
+  const eligibleReserve=session.reserve.slice();
+  let selected=Array.isArray(entrants)?entrants.filter(id=>eligibleReserve.includes(id)):[];
+  if(selected.length!==2||new Set(selected).size!==2) selected=chooseEntrants(eligibleReserve,winnerIds,session);
+  if(selected.length!==2||new Set(selected).size!==2) {
+    toast("É necessário ter pelo menos dois jogadores na reserva para iniciar a próxima partida.","error");
     return;
   }
+
+  let rotation;
+  try {
+    rotation=window.ReiDaQuadraRotation.buildNextRotation({teamA,teamB,reserve:eligibleReserve},loserSide,selected);
+  } catch(error) {
+    toast("Rotação cancelada: "+error.message,"error");
+    return;
+  }
+
   const playedAt=new Date().toISOString();
   const record={id:uid(),matchNumber:session.matchNo,playedAt,teamA,teamB,winnerSide,loserSide,winnerIds,loserIds,entrants:selected.slice()};
-  session.undoStack=session.undoStack||[];
-  session.undoStack.push(snapshot);
-  session.history.push(record);
-  session.teamA=winnerSide==="A"?winnerIds.slice():selected.slice();
-  session.teamB=winnerSide==="B"?winnerIds.slice():selected.slice();
-  session.reserve=pool.filter(id=>!selected.includes(id));session.nextEntrants=null;
-  session.matchNo+=1;session.updatedAt=playedAt;
-  try{validateSession(session);}catch(error){restoreSnapshot(session,snapshot);session.undoStack.pop();session.history.pop();toast("Rotação cancelada: "+error.message,"error");return;}
+  const nextState=clone(session);
+  nextState.teamA=rotation.teamA;
+  nextState.teamB=rotation.teamB;
+  nextState.reserve=rotation.reserve;
+  nextState.nextEntrants=null;
+  nextState.matchNo=session.matchNo+1;
+  nextState.updatedAt=playedAt;
+  nextState.history=session.history.concat(record);
+  nextState.undoStack=(session.undoStack||[]).concat(snapshot);
+
+  try { validateSession(nextState); }
+  catch(error) { toast("Rotação cancelada: "+error.message,"error");return; }
+
+  Object.assign(session,nextState);
   saveDb();render();toast("Resultado registrado. A próxima partida está pronta!");
 }
 function undoLastMatch() {
