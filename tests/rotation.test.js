@@ -32,6 +32,6 @@ assert.deepEqual(fourNext.teamA,["c","d"]);
 assert.deepEqual(fourNext.teamB,["a","b"]);
 assert.deepEqual(fourNext.reserve,[]);
 
-assert.throws(() => rotate(initial,"A",["a","e"]), /precisam estar na reserva/);
+assert.throws(() => rotate(initial,"A",["c","e"]), /precisam estar na reserva/);
 assert.throws(() => rotate(initial,"A",["e","e"]), /desafiantes distintos/);
 console.log("OK: rotação, fila, quatro jogadores e validações básicas.");
